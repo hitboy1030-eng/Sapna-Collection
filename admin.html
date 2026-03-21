@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin – Sapna Collection</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔐</text></svg>" />
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+</head>
+<body class="admin-body">
+
+  <!-- ===== ADMIN LOGIN ===== -->
+  <section id="admin-login" aria-label="Admin login">
+    <div class="login-box">
+      <div class="login-logo">
+        <h1>Sapna Collection</h1>
+        <p>Admin Panel</p>
+      </div>
+
+      <div class="form-group">
+        <label for="login-email">Email Address</label>
+        <input
+          type="email"
+          id="login-email"
+          class="form-control"
+          placeholder="admin@example.com"
+          autocomplete="username"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="login-password">Password</label>
+        <input
+          type="password"
+          id="login-password"
+          class="form-control"
+          placeholder="••••••••"
+          autocomplete="current-password"
+        />
+      </div>
+
+      <button class="btn btn-gold btn-block" id="login-btn">
+        <span id="login-btn-text">Sign In</span>
+        <span id="login-spinner" class="spinner hidden"></span>
+      </button>
+
+      <p id="login-error" role="alert"></p>
+    </div>
+  </section>
+
+  <!-- ===== ADMIN DASHBOARD ===== -->
+  <div id="admin-dashboard" class="hidden" aria-label="Admin dashboard">
+
+    <!-- Topbar -->
+    <header id="admin-topbar">
+      <div class="topbar-inner">
+        <div class="admin-logo">
+          Sapna Collection
+          <small>Admin</small>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <a href="index.html" class="btn btn-outline" style="padding:8px 14px;font-size:0.8rem;" target="_blank">
+            View Store
+          </a>
+          <button class="btn btn-danger" id="logout-btn" style="padding:8px 14px;font-size:0.8rem;">
+            Logout
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <div id="admin-main">
+
+      <!-- Stats -->
+      <div class="stats-grid" aria-label="Dashboard statistics">
+        <div class="stat-card">
+          <span class="stat-num" id="stat-total">—</span>
+          <span class="stat-label">Total Products</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-num" id="stat-cats">—</span>
+          <span class="stat-label">Categories</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-num" id="stat-featured">—</span>
+          <span class="stat-label">Featured</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-num" id="stat-lowstock">—</span>
+          <span class="stat-label">Low Stock</span>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="admin-tabs" role="tablist">
+        <button class="tab-btn active" data-tab="inventory" role="tab" aria-selected="true">📦 Inventory</button>
+        <button class="tab-btn" data-tab="add-product" role="tab" aria-selected="false">➕ Add Product</button>
+        <button class="tab-btn" data-tab="settings" role="tab" aria-selected="false">⚙️ Settings</button>
+      </div>
+
+      <!-- ===== TAB: INVENTORY ===== -->
+      <div class="tab-panel active" id="tab-inventory" role="tabpanel">
+        <div class="admin-panel-header">
+          <h2>Product Inventory</h2>
+          <div class="admin-search" style="position:relative;">
+            <input
+              type="search"
+              id="admin-search"
+              placeholder="Search products…"
+              aria-label="Search inventory"
+            />
+            <span class="search-icon" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+              </svg>
+            </span>
+          </div>
+        </div>
+
+        <div class="product-table-wrap">
+          <table class="product-table" aria-label="Products list">
+            <thead>
+              <tr>
+                <th>Image</th>
+                <th>Name</th>
+                <th class="hide-mobile">Category</th>
+                <th>Price</th>
+                <th class="hide-mobile">Stock</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="admin-product-tbody">
+              <tr>
+                <td colspan="6" style="text-align:center;color:var(--text-muted);padding:32px;">Loading products…</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===== TAB: ADD / EDIT PRODUCT ===== -->
+      <div class="tab-panel" id="tab-add-product" role="tabpanel">
+        <div class="admin-panel-header">
+          <h2 id="product-form-title">Add New Product</h2>
+          <button class="btn btn-outline" id="form-reset-btn" style="padding:8px 14px;font-size:0.8rem;">
+            Clear Form
+          </button>
+        </div>
+
+        <form class="product-form" id="product-form" novalidate aria-label="Product form">
+          <input type="hidden" id="edit-product-id" value="" />
+
+          <div class="form-grid">
+            <!-- Basic info -->
+            <span class="form-section-title">Basic Information</span>
+
+            <div class="form-group">
+              <label for="pf-name">Product Name *</label>
+              <input type="text" id="pf-name" class="form-control" placeholder="e.g. Anarkali Silk Dress" required />
+            </div>
+
+            <div class="form-group">
+              <label for="pf-price">Price (₹) *</label>
+              <input type="number" id="pf-price" class="form-control" placeholder="e.g. 2499" min="0" required />
+            </div>
+
+            <div class="form-group form-full">
+              <label for="pf-image">Image URL</label>
+              <input type="url" id="pf-image" class="form-control" placeholder="https://example.com/image.jpg" />
+              <p class="form-help">Paste a public image link here, or choose a file from your device below.</p>
+            </div>
+
+            <div class="form-group form-full">
+              <label for="pf-image-file">Upload From Device</label>
+              <div class="file-upload-row">
+                <input type="file" id="pf-image-file" class="form-control file-input-control" accept="image/*" />
+                <button type="button" class="btn btn-outline file-clear-btn" id="pf-image-clear-btn">
+                  Clear Selected File
+                </button>
+              </div>
+              <p class="form-help">Choose any image from your device. It will upload to Supabase Storage when you save the product.</p>
+              <div id="image-upload-msg" class="admin-msg"></div>
+            </div>
+
+            <!-- Image Preview -->
+            <div class="form-group form-full">
+              <label>Image Preview</label>
+              <div class="img-preview-wrap">
+                <img id="img-preview" src="" alt="" style="display:none;" />
+                <div class="img-preview-placeholder" id="img-placeholder">
+                  <span style="font-size:2rem;">🖼️</span>
+                  <span>Preview will appear here</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Product details -->
+            <span class="form-section-title">Product Details</span>
+
+            <div class="form-group">
+              <label for="pf-category">Category *</label>
+              <input type="text" id="pf-category" class="form-control" placeholder="e.g. Anarkali, Kurta, Lehenga" required list="category-suggestions" />
+              <datalist id="category-suggestions">
+                <option value="Anarkali">
+                <option value="Lehenga">
+                <option value="Kurti">
+                <option value="Saree">
+                <option value="Salwar Suit">
+                <option value="Gown">
+                <option value="Jumpsuit">
+                <option value="Casual Wear">
+                <option value="Ethnic Wear">
+              </datalist>
+            </div>
+
+            <div class="form-group">
+              <label for="pf-color">Color</label>
+              <input type="text" id="pf-color" class="form-control" placeholder="e.g. Red, Navy Blue" />
+            </div>
+
+            <div class="form-group">
+              <label for="pf-fabric">Fabric</label>
+              <input type="text" id="pf-fabric" class="form-control" placeholder="e.g. Silk, Cotton, Georgette" />
+            </div>
+
+            <div class="form-group">
+              <label for="pf-sizes">Sizes (comma separated)</label>
+              <input type="text" id="pf-sizes" class="form-control" placeholder="e.g. XS, S, M, L, XL, XXL" />
+            </div>
+
+            <div class="form-group">
+              <label for="pf-stock">Stock Quantity</label>
+              <input type="number" id="pf-stock" class="form-control" placeholder="e.g. 25" min="0" value="0" />
+            </div>
+
+            <div class="form-group form-full">
+              <label for="pf-description">Description</label>
+              <textarea id="pf-description" class="form-control" placeholder="Describe the product, its features, occasion, etc."></textarea>
+            </div>
+
+            <!-- Badges -->
+            <span class="form-section-title">Product Badges</span>
+            <div class="checkbox-row">
+              <div class="check-group">
+                <input type="checkbox" id="pf-featured" />
+                <label for="pf-featured">⭐ Featured</label>
+              </div>
+              <div class="check-group">
+                <input type="checkbox" id="pf-new" />
+                <label for="pf-new">🆕 New Arrival</label>
+              </div>
+              <div class="check-group">
+                <input type="checkbox" id="pf-bestseller" />
+                <label for="pf-bestseller">🔥 Bestseller</label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div style="display:flex;gap:12px;margin-top:24px;flex-wrap:wrap;">
+            <button type="submit" class="btn btn-gold" id="product-submit-btn">
+              <span id="product-submit-text">Save Product</span>
+              <span id="product-submit-spinner" class="spinner hidden"></span>
+            </button>
+            <button type="button" class="btn btn-outline" id="cancel-edit-btn" style="display:none;">
+              Cancel Edit
+            </button>
+          </div>
+
+          <div id="product-msg" class="admin-msg"></div>
+        </form>
+      </div>
+
+      <!-- ===== TAB: SETTINGS ===== -->
+      <div class="tab-panel" id="tab-settings" role="tabpanel">
+        <div class="admin-panel-header">
+          <h2>Store Settings</h2>
+        </div>
+
+        <form class="settings-form" id="settings-form" novalidate aria-label="Store settings form">
+          <div class="form-grid">
+            <span class="form-section-title">Store Identity</span>
+
+            <div class="form-group">
+              <label for="sf-store-name">Store Name</label>
+              <input type="text" id="sf-store-name" class="form-control" placeholder="Sapna Collection" />
+            </div>
+
+            <div class="form-group">
+              <label for="sf-whatsapp">WhatsApp Number (with country code)</label>
+              <input type="text" id="sf-whatsapp" class="form-control" placeholder="919876543210" />
+            </div>
+
+            <div class="form-group form-full">
+              <label for="sf-contact-text">WhatsApp Button Text</label>
+              <input type="text" id="sf-contact-text" class="form-control" placeholder="Chat with us on WhatsApp" />
+            </div>
+
+            <span class="form-section-title">Homepage Content</span>
+
+            <div class="form-group form-full">
+              <label for="sf-welcome-title">Hero Title</label>
+              <input type="text" id="sf-welcome-title" class="form-control" placeholder="Elegance Redefined" />
+            </div>
+
+            <div class="form-group form-full">
+              <label for="sf-welcome-message">Hero Description</label>
+              <textarea id="sf-welcome-message" class="form-control" placeholder="Discover handpicked designs for the modern Indian woman."></textarea>
+            </div>
+
+            <div class="form-group form-full">
+              <label for="sf-announcement">Announcement Bar Text</label>
+              <input type="text" id="sf-announcement" class="form-control" placeholder="Free shipping on orders above ₹999!" />
+            </div>
+          </div>
+
+          <div style="margin-top:24px;">
+            <button type="submit" class="btn btn-gold" id="settings-submit-btn">
+              <span id="settings-submit-text">Save Settings</span>
+              <span id="settings-submit-spinner" class="spinner hidden"></span>
+            </button>
+          </div>
+
+          <div id="settings-msg" class="admin-msg"></div>
+        </form>
+      </div>
+
+    </div><!-- end #admin-main -->
+  </div><!-- end #admin-dashboard -->
+
+  <!-- ===== CONFIRM DIALOG ===== -->
+  <div id="confirm-overlay" role="dialog" aria-modal="true" aria-label="Confirm delete">
+    <div class="confirm-box">
+      <h3>Delete Product?</h3>
+      <p id="confirm-text">This action cannot be undone. The product will be permanently removed.</p>
+      <div class="confirm-actions">
+        <button class="btn btn-outline" id="confirm-cancel">Cancel</button>
+        <button class="btn btn-danger" id="confirm-ok">Yes, Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="supabase-config.js?v=20260322c"></script>
+  <script src="admin.js?v=20260322c"></script>
+  <script src="admin-storage-upload.js?v=20260322c"></script>
+</body>
+</html>
